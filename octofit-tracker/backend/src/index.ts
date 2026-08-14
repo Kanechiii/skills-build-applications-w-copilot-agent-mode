@@ -17,19 +17,22 @@ const mongoUri = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/octofit_d
 // Codespaces-aware API URL support — use a human-friendly label when in Codespaces
 // Hostnames cannot contain spaces, so we provide a display name with spaces
 // while using a hyphenated form for the actual hostname.
+const sanitizeForHost = (name: string): string => name.replace(/[^a-z0-9-]/gi, '-').replace(/^-+|-+$/g, '').toLowerCase();
+
 const getApiUrl = (): string => {
   if (process.env.CODESPACE_NAME) {
-    const friendlyDisplay = 'friendly orbit';
-    const friendlyHost = friendlyDisplay.replace(/\s+/g, '-');
-    return `https://${friendlyHost}-${port}.app.github.dev`;
+    const raw = process.env.CODESPACE_NAME as string;
+    const hostPart = sanitizeForHost(raw) || 'friendly-orbit';
+    return `https://${hostPart}-${port}.app.github.dev`;
   }
+  // If not in Codespaces, serve localhost
   return `http://localhost:${port}`;
 };
 
 // Human-friendly display name for Codespaces (kept for UI/logs)
 const getDisplayName = (): string => {
   if (process.env.CODESPACE_NAME) {
-    return 'friendly orbit';
+    return process.env.CODESPACE_NAME as string;
   }
   return `localhost:${port}`;
 };
