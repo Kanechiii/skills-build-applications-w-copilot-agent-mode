@@ -14,12 +14,24 @@ const app = express();
 const port = Number(process.env.PORT ?? 8000);
 const mongoUri = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/octofit_db';
 
-// Codespaces-aware API URL support
+// Codespaces-aware API URL support — use a human-friendly label when in Codespaces
+// Hostnames cannot contain spaces, so we provide a display name with spaces
+// while using a hyphenated form for the actual hostname.
 const getApiUrl = (): string => {
   if (process.env.CODESPACE_NAME) {
-    return `https://${process.env.CODESPACE_NAME}-${port}.app.github.dev`;
+    const friendlyDisplay = 'friendly orbit';
+    const friendlyHost = friendlyDisplay.replace(/\s+/g, '-');
+    return `https://${friendlyHost}-${port}.app.github.dev`;
   }
   return `http://localhost:${port}`;
+};
+
+// Human-friendly display name for Codespaces (kept for UI/logs)
+const getDisplayName = (): string => {
+  if (process.env.CODESPACE_NAME) {
+    return 'friendly orbit';
+  }
+  return `localhost:${port}`;
 };
 
 app.use(cors());
@@ -30,6 +42,7 @@ app.get('/api/health', (_req, res) => {
     status: 'ok',
     service: 'octofit-backend',
     apiUrl: getApiUrl(),
+    displayName: getDisplayName(),
   });
 });
 
@@ -45,7 +58,7 @@ mongoose
   .then(() => {
     console.log('Connected to octofit_db');
     app.listen(port, () => {
-      console.log(`OctoFit backend running on ${getApiUrl()}`);
+      console.log(`OctoFit backend running on ${getApiUrl()} (${getDisplayName()})`);
     });
   })
   .catch((error) => {
